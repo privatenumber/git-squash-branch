@@ -1,7 +1,7 @@
 import { execa } from 'execa';
 import { cli } from 'cleye';
 import prompts from 'prompts';
-import { gray } from 'kolorist';
+import { green, gray } from 'kolorist';
 import { version, description } from '../package.json';
 
 const getCurrentCommit = async () => {
@@ -114,7 +114,7 @@ const getRemoteDefaultBranch = async () => {
 	await execa('git', ['commit', '--message', message]);
 
 	console.log(
-		'Successfully squashed with message:'
+		`${green('✔')} Successfully squashed with message:`
 		+ `\n${gray(message)}\n`
 		+ 'To revert back to the original commit:'
 		+ `\n${gray(`git reset --hard ${currentCommit}`)}`,
