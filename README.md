@@ -19,6 +19,26 @@ git reset --hard 4f0432ffd1
 $ git push --force
 ```
 
+### Manual
+```
+Usage:
+  git-squash-branch [flags...]
+
+Flags:
+  -b, --base <string>
+  Base branch to compare against. If not specified, will try to detect it from
+  remote "origin".
+
+  -h, --help
+  Show help
+
+  -m, --message <string>
+  Message for the squash commit. (Defaults to last commit message.)
+
+  --version
+  Show version
+```
+
 ## FAQ
 ### Why?
 To consolidate the commits in your branch into a single commit for a cleaner Git history.
