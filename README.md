@@ -54,13 +54,13 @@ Examples:
 
 ### What does this script do?
 
-Basically runs these commands, derived from this [StackOveflow answer](https://stackoverflow.com/a/25357146):
+Basically runs these commands, derived from this [StackOverflow answer](https://stackoverflow.com/a/25357146):
 ```sh
 $ git reset --soft $(git merge-base <base-branch> $(git branch --show-current))
 $ git commit -m <message>
 ```
 
-On top of that, it adds some features such as:
+On top of that, it adds extra features such as:
 - Tries to automatically detect the base branch based on the `origin` remote
 - Defaults to using the commit message from the last commit, if not provided
 - Logs the current commit hash in case you want to revert the squash
