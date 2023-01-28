@@ -38,6 +38,20 @@ const getRemoteDefaultBranch = async () => {
 	return stdout.match(/ {2}HEAD branch: (.*)/)?.[1];
 };
 
+const assertCleanTree = async () => {
+	const { stdout } = await execa('git', ['status', '--porcelain', '--untracked-files=no']).catch((error) => {
+		if (error.stderr.includes('not a git repository')) {
+			throw new Error('Not in a git repository');
+		}
+
+		throw error;
+	});
+
+	if (stdout) {
+		throw new Error('Working tree is not clean');
+	}
+};
+
 (async () => {
 	const argv = cli({
 		name: 'git-squash-branch',
@@ -62,7 +76,7 @@ const getRemoteDefaultBranch = async () => {
 		},
 	});
 
-	// TODO: Assert clean tree
+	await assertCleanTree();
 
 	let { base: baseBranch } = argv.flags;
 	if (!baseBranch) {
