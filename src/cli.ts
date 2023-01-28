@@ -62,6 +62,8 @@ const getRemoteDefaultBranch = async () => {
 		},
 	});
 
+	// TODO: Assert clean tree
+
 	let { base: baseBranch } = argv.flags;
 	if (!baseBranch) {
 		const detectedDefaultBranch = await getRemoteDefaultBranch();
@@ -111,7 +113,12 @@ const getRemoteDefaultBranch = async () => {
 	 * stage them back.
 	 */
 	await execa('git', ['reset', '--soft', bestCommonAncestor]);
-	await execa('git', ['commit', '--message', message]);
+
+	/**
+	 * --no-verify to skip pre-commit hooks
+	 * Since the code is already committed, we don't need to run them again
+	 */
+	await execa('git', ['commit', '--no-verify', '--message', message]);
 
 	console.log(
 		`${green('✔')} Successfully squashed with message:`
