@@ -1,7 +1,7 @@
 import { execa } from 'execa';
 import { cli } from 'cleye';
 import prompts from 'prompts';
-import { green, gray } from 'kolorist';
+import { green, red, gray } from 'kolorist';
 import { version, description } from '../package.json';
 
 const getCurrentCommit = async () => {
@@ -120,6 +120,6 @@ const getRemoteDefaultBranch = async () => {
 		+ `\n${gray(`git reset --hard ${currentCommit}`)}`,
 	);
 })().catch((error) => {
-	console.error(error.message);
+	console.error(`${red('✖')} ${error.message}`);
 	process.exit(1);
 });
