@@ -6,7 +6,6 @@ Script to squash commits in a Git branch or pull-request.
 
 ## Usage
 
-
 ### Squash current branch
 Run the script with [npx](https://nodejs.dev/learn/the-npx-nodejs-package-runner) from the branch you want to squash:
 ```sh
