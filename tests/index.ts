@@ -39,30 +39,34 @@ test('squashes branch', async () => {
 
 	const git = await createGit(fixture.path);
 
-	await git('add', ['file']);
+	await git('config', ['user.name', 'name']);
+	await git('config', ['user.email', 'email']);
 
+	await git('add', ['file']);
 	await git('commit', ['-am', 'commit-1']);
 
 	await git('checkout', ['-b', 'branch-a']);
 
 	fixture.writeFile('file', 'foo');
-
 	await git('commit', ['-am', 'commit-2']);
 
 	fixture.writeFile('file', 'bar');
-
 	await git('commit', ['-am', 'commit-3']);
+
+	const { stdout: logBefore } = await git('log');
+	expect(logBefore).toMatch('commit-1');
+	expect(logBefore).toMatch('commit-2');
+	expect(logBefore).toMatch('commit-3');
 
 	await execa(squashPath, ['-b', 'master', '-m', 'squash!'], {
 		cwd: fixture.path,
 	});
 
-	const { stdout } = await git('log');
-
-	expect(stdout).toMatch('commit-1');
-	expect(stdout).not.toMatch('commit-2');
-	expect(stdout).not.toMatch('commit-3');
-	expect(stdout).toMatch('squash!');
+	const { stdout: logAfter } = await git('log');
+	expect(logAfter).toMatch('commit-1');
+	expect(logAfter).not.toMatch('commit-2');
+	expect(logAfter).not.toMatch('commit-3');
+	expect(logAfter).toMatch('squash!');
 
 	await fixture.rm();
 });
