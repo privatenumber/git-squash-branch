@@ -47,10 +47,10 @@ test('squashes branch', async () => {
 
 	await git('checkout', ['-b', 'branch-a']);
 
-	fixture.writeFile('file', 'foo');
+	await fixture.writeFile('file', 'foo');
 	await git('commit', ['-am', 'commit-2']);
 
-	fixture.writeFile('file', 'bar');
+	await fixture.writeFile('file', 'bar');
 	await git('commit', ['-am', 'commit-3']);
 
 	const { stdout: logBefore } = await git('log');
