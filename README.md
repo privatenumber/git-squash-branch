@@ -1,11 +1,13 @@
 # git-squash-branch
 
-Script to squash the commits in the current Git branch.
+Script to squash commits in a Git branch or pull-request.
 
 <sub>Support this project by ⭐️ starring and sharing it. [Follow me](https://github.com/privatenumber) to see what other cool projects I'm working on! ❤️</sub>
 
 ## Usage
 
+
+### Squash current branch
 Run the script with [npx](https://nodejs.dev/learn/the-npx-nodejs-package-runner) from the branch you want to squash:
 ```sh
 $ npx git-squash-branch --base develop --message "feat: my new feature"
@@ -16,24 +18,47 @@ feat: my new feature
 To revert back to the original commit:
 git reset --hard 4f0432ffd1
 
+# Force push the squashed branch to remote
 $ git push --force
+```
+
+### Squash PR
+> Requires [GitHub CLI](https://cli.github.com/) to be installed
+
+Pass in the PR number and it will squash the PR branch into a single commit and force push it back to the PR branch:
+
+```sh
+$ npx git-squash-branch pr 1234
+
+✔ Successfully squashed PR #1234 with message:
+feat: my PR title
+
+To revert the PR back to the original commit:
+git push -f origin 4f0432ffd1:pr-branch-name
 ```
 
 ### Manual
 ```
 Usage:
   git-squash-branch [flags...]
+  git-squash-branch <command>
+
+Commands:
+  pr
 
 Flags:
   -b, --base <string>
-  Base branch to compare against. If not specified, will try to detect it from
-  remote "origin".
+  Base branch to compare against. If not specified, will try to
+  detect it from remote "origin".
 
   -h, --help
   Show help
 
   -m, --message <string>
-  Message for the squash commit. (Defaults to last commit message.)
+  Message for the squash commit (defaults to last commit message)
+
+  -r, --remote <string>
+  Remote to fetch from (default: "origin")
 
   --version
   Show version

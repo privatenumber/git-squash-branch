@@ -1,7 +1,7 @@
 {
 	"name": "git-squash-branch",
 	"version": "0.0.0-semantic-release",
-	"description": "Squash the commits in the current Git branch",
+	"description": "Squash commits in a Git branch or pull-request",
 	"keywords": [
 		"git",
 		"squash",
@@ -32,6 +32,10 @@
 	"lint-staged": {
 		"*.{js,ts}": "eslint"
 	},
+	"dependencies": {
+		"tasuku": "^2.0.1",
+		"prompts": "^2.4.2"
+	},
 	"devDependencies": {
 		"@pvtnbr/eslint-config": "^0.33.0",
 		"@types/node": "^18.11.18",
@@ -43,8 +47,8 @@
 		"kolorist": "^1.6.0",
 		"lint-staged": "^13.1.0",
 		"pkgroll": "^1.8.1",
-		"prompts": "^2.4.2",
 		"simple-git-hooks": "^2.8.1",
+		"terminal-link": "^3.0.0",
 		"typescript": "^4.9.4"
 	},
 	"eslintConfig": {
