@@ -7,8 +7,16 @@ Script to squash commits in a Git branch or pull-request.
 ## Usage
 
 ### Squash current branch
-Run the script with [npx](https://nodejs.dev/learn/the-npx-nodejs-package-runner) from the branch you want to squash:
+Run the script with [npx](https://nodejs.dev/learn/the-npx-nodejs-package-runner) from the repository branch you want to squash:
+```
+npx git-squash-branch
+```
+
+#### Example
 ```sh
+# You must be inside the branch you want to squash
+$ git checkout branch-to-squash
+
 $ npx git-squash-branch --base develop --message "feat: my new feature"
 
 Successfully squashed with message:
@@ -22,19 +30,30 @@ $ git push --force
 ```
 
 ### Squash PR
-> Requires [GitHub CLI](https://cli.github.com/) to be installed
+> ⚠️ Requires [GitHub CLI](https://cli.github.com/) to be installed
 
-Pass in the PR number and it will squash the PR branch into a single commit and force push it back to the PR branch:
+From inside the repository directory, pass in the PR number:
+```
+npx git-squash-branch pr <pr-number>
+```
 
+It will squash the PR branch into a single commit and force push it back to the PR branch.
+
+#### Example
 ```sh
+# You must be inside the repository for gh to fetch the PR
+$ cd my-repo
+
 $ npx git-squash-branch pr 1234
 
-✔ Successfully squashed PR #1234 with message:
+✔ Successfully squashed PR 1234 with message:
 feat: my PR title
 
 To revert the PR back to the original commit:
 git push -f origin 4f0432ffd1:pr-branch-name
 ```
+
+> Note: This command will not update the PR with the latest base branch.
 
 ### Manual
 ```
