@@ -1,0 +1,26 @@
+{
+  "name": "git-squash-branch",
+  "version": "0.0.0-semantic-release",
+  "description": "Squash commits in a Git branch or pull-request",
+  "keywords": [
+    "git",
+    "squash",
+    "branch"
+  ],
+  "license": "MIT",
+  "repository": "privatenumber/git-squash-branch",
+  "funding": "https://github.com/privatenumber/git-squash-branch?sponsor=1",
+  "author": {
+    "name": "Hiroki Osame",
+    "email": "hiroki.osame@gmail.com"
+  },
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "bin": "dist/cli.cjs",
+  "dependencies": {
+    "prompts": "^2.4.2",
+    "tasuku": "^2.0.1"
+  }
+}
