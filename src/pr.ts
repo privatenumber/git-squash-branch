@@ -106,7 +106,9 @@ export const pr = command({
 			`${green('✔')} Successfully squashed ${terminalLink(`PR #${prNumber}`, url)} with message:`
 			+ `\n${gray(message)}\n`
 			+ '\nTo revert the PR back to the original commit:'
-			+ `\n${gray(`git push -f ${remote} ${headRefOid}:${headRefName}`)}`,
+			+ `\n${gray(`git push -f ${remote} ${headRefOid}:${headRefName}`)}\n`
+			+ '\nIf you have the branch locally, hard-reset it to the squashed remote branch:'
+			+ `\n${gray(`git checkout ${headRefName} && git reset --hard ${remote}/${headRefName}`)}`,
 		);
 	})().catch((error) => {
 		console.error(`${red('✖')} ${error.message}`);
