@@ -84,7 +84,9 @@ cli({
 			`${green('✔')} Successfully squashed with message:`
 			+ `\n${gray(message)}\n`
 			+ '\nTo revert back to the original commit:'
-			+ `\n${gray(`git reset --hard ${currentCommit}`)}`,
+			+ `\n${gray(`git reset --hard ${currentCommit}`)}\n`
+			+ '\nIf you use a remote, don\'t forget to force push:'
+			+ `\n${gray(`git push --force origin ${currentBranch}`)}`,
 		);
 	})().catch((error) => {
 		console.error(`${red('✖')} ${error.message}`);
