@@ -12,7 +12,7 @@ Run the script with [npx](https://nodejs.dev/learn/the-npx-nodejs-package-runner
 npx git-squash-branch
 ```
 
-#### Example
+#### Example: squashing new commits in current branch compared to base branch
 ```sh
 # You must be inside the branch you want to squash
 $ git checkout branch-to-squash
@@ -21,6 +21,23 @@ $ npx git-squash-branch --base develop --message "feat: my new feature"
 
 Successfully squashed with message:
 feat: my new feature
+
+To revert back to the original commit:
+git reset --hard 4f0432ffd1
+
+# Force push the squashed branch to remote
+$ git push --force
+```
+
+#### Example: squashing all commits in current branch
+```sh
+$ git checkout main
+
+$ npx git-squash-branch --base main --message "feat: init"
+
+Current branch is the same as base branch. Squashing all commits to root.
+Successfully squashed with message:
+feat: init
 
 To revert back to the original commit:
 git reset --hard 4f0432ffd1

@@ -68,15 +68,17 @@ cli({
 			throw new Error('Missing base branch. Specify it manually with the --base flag.');
 		}
 
-		const [
-			{ stdout: currentCommit },
-			message,
-		] = await Promise.all([
-			execa('git', ['rev-parse', 'HEAD']),
-			argv.flags.message ?? await getCurrentCommitMessage(),
-		]);
+		const { stdout: currentBranch } = await execa('git', ['branch', '--show-current']);
+		const { stdout: currentCommit } = await execa('git', ['rev-parse', 'HEAD']);
+		const message = argv.flags.message ?? await getCurrentCommitMessage();
 
-		await squash(baseBranch, message);
+		if (baseBranch === currentBranch) {
+			console.log('Current branch is the same as base branch. Squashing all commits to root.');
+			const { stdout: orphanCommit } = await execa('git', ['commit-tree', 'HEAD^{tree}', '-m', message]);
+			await execa('git', ['reset', orphanCommit]);
+		} else {
+			await squash(baseBranch, message);
+		}
 
 		console.log(
 			`${green('✔')} Successfully squashed with message:`
