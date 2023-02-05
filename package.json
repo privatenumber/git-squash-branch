@@ -18,7 +18,7 @@
 	"files": [
 		"dist"
 	],
-	"bin": "dist/cli.cjs",
+	"bin": "dist/index.cjs",
 	"scripts": {
 		"prepare": "simple-git-hooks",
 		"build": "pkgroll --minify --target=node12.19",
