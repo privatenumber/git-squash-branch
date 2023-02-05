@@ -4,6 +4,16 @@ Script to squash commits in a Git branch or pull-request.
 
 <sub>Support this project by ⭐️ starring and sharing it. [Follow me](https://github.com/privatenumber) to see what other cool projects I'm working on! ❤️</sub>
 
+## Why?
+To consolidate the commits in a branch to a single commit for a cleaner Git history.
+
+Examples:
+1. Squashing WIP commits in the default branch of a new repository. I personally do this often when starting a new project.
+
+2. Squashing your PR's commits when [squash merging](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/configuring-pull-request-merges/configuring-commit-squashing-for-pull-requests) is disabled on the repository you're contributing to.
+
+3. Squashing your PR's commits when your PR is deployed through another PR (e.g. in a batched PRs, GitHub cannot squash individual PRs in the batch)
+
 ## Usage
 
 ### Squash current branch
@@ -99,20 +109,7 @@ Flags:
   Show version
 ```
 
-## FAQ
-### Why?
-To consolidate the commits in your branch into a single commit for a cleaner Git history.
-
-Usually, squashing can be easily done [on GitHub when merging pull-requests](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/configuring-pull-request-merges/configuring-commit-squashing-for-pull-requests).
-
-However, there are cases where it cannot be used and you may prefer to manually squash your branch.
-
-Examples:
-1. Squash merging is disabled for your repository
-
-2. When multiple PRs are merged together in a batched PR via merge-commit, GitHub does not support squashing the individual PRs.
-
-### What does this script do?
+## What does this script do?
 
 Basically runs these commands, derived from this [StackOverflow answer](https://stackoverflow.com/a/25357146):
 ```sh
