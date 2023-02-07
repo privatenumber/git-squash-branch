@@ -65,7 +65,7 @@ export const pr = command({
 		const {
 			baseRefName, headRefName, headRefOid, title, url,
 		} = fetchedPr.result;
-		const message = argv.flags.message || title;
+		const message = argv.flags.message || `${title} (#${prNumber})`;
 
 		const fetchRemote = await task(
 			`Fetching branches from remote ${stringify(remote)}`,
