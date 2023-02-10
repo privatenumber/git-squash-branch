@@ -59,9 +59,9 @@ $ git push --force
 ### Squash PR
 > ⚠️ Requires [GitHub CLI](https://cli.github.com/) to be installed
 
-From inside the repository directory, pass in the PR number:
+From inside the repository directory, pass in the PR number, URL, or branch:
 ```
-npx git-squash-branch pr <pr-number>
+npx git-squash-branch pr [<number> | <url> | <branch>]
 ```
 
 It will squash the PR branch into a single commit and force push it back to the PR branch.
