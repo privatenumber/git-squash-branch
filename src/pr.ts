@@ -19,7 +19,7 @@ const assertHasGh = async () => {
 	}
 };
 
-const properties = ['title', 'baseRefName', 'headRefName', 'headRefOid', 'url'] as const;
+const properties = ['title', 'number', 'baseRefName', 'headRefName', 'headRefOid', 'url'] as const;
 type PrData = {
 	[Property in typeof properties[number]]: string;
 };
@@ -53,19 +53,22 @@ export const pr = command({
 		await assertHasGh();
 
 		const { remote } = argv.flags;
-		const prNumber = argv._.number;
+
+		// Can be a number, url, or branch
+		const prReference = argv._.number;
+		const isNumber = /^\d+$/.test(prReference);
 
 		const fetchedPr = await task(
-			`Fetching PR #${prNumber}`,
-			() => getPrInfo(prNumber),
+			`Fetching PR ${isNumber ? '#' : ''}${prReference}`,
+			() => getPrInfo(prReference),
 		);
 		fetchedPr.clear();
 
 		const { stdout: currentBranch } = await execa('git', ['branch', '--show-current']);
 		const {
-			baseRefName, headRefName, headRefOid, title, url,
+			baseRefName, headRefName, headRefOid, title, url, number,
 		} = fetchedPr.result;
-		const message = argv.flags.message || `${title} (#${prNumber})`;
+		const message = argv.flags.message || `${title} (#${number})`;
 
 		const fetchRemote = await task(
 			`Fetching branches from remote ${stringify(remote)}`,
@@ -103,7 +106,7 @@ export const pr = command({
 		}
 
 		console.log(
-			`${green('✔')} Successfully squashed ${terminalLink(`PR #${prNumber}`, url)} with message:`
+			`${green('✔')} Successfully squashed ${terminalLink(`PR #${number}`, url)} with message:`
 			+ `\n${gray(message)}\n`
 			+ '\nTo revert the PR back to the original commit:'
 			+ `\n${gray(`git push -f ${remote} ${headRefOid}:${headRefName}`)}\n`
