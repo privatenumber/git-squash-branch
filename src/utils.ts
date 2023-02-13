@@ -7,6 +7,11 @@ export const getCurrentCommitMessage = async () => {
 	return stdout;
 };
 
+export const getCurrentCommitHash = async () => {
+	const { stdout } = await execa('git', ['rev-parse', 'HEAD']);
+	return stdout;
+};
+
 export const getRemoteDefaultBranch = async (remote: string) => {
 	const { stdout } = await execa(
 		'git',

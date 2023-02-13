@@ -1,12 +1,13 @@
 import { execa } from 'execa';
 import { cli } from 'cleye';
-import prompts from 'prompts';
+import { spinner, confirm } from '@clack/prompts';
 import { green, red, gray } from 'kolorist';
 import { version, description } from '../package.json';
 import {
 	stringify,
 	assertCleanTree,
 	getCurrentCommitMessage,
+	getCurrentCommitHash,
 	getRemoteDefaultBranch,
 	squash,
 } from './utils.js';
@@ -48,17 +49,22 @@ cli({
 		await assertCleanTree();
 
 		let { base: baseBranch } = argv.flags;
+
 		if (!baseBranch) {
+			const s = spinner();
+
+			s.start(`Detecting default branch from remote ${stringify(argv.flags.remote)}`);
+
 			const detectedDefaultBranch = await getRemoteDefaultBranch(argv.flags.remote);
 
+			s.stop(`Detected base branch: ${detectedDefaultBranch}`);
+
 			if (detectedDefaultBranch) {
-				const response = await prompts({
-					type: 'confirm',
-					name: 'confirmed',
-					message: `Use branch ${stringify(detectedDefaultBranch)}? (y/n)`,
+				const confirmed = await confirm({
+					message: `Squash commits compared to ${stringify(detectedDefaultBranch)}?`,
 				});
 
-				if (response.confirmed) {
+				if (confirmed) {
 					baseBranch = detectedDefaultBranch;
 				}
 			}
@@ -69,7 +75,7 @@ cli({
 		}
 
 		const { stdout: currentBranch } = await execa('git', ['branch', '--show-current']);
-		const { stdout: currentCommit } = await execa('git', ['rev-parse', 'HEAD']);
+		const currentCommit = await getCurrentCommitHash();
 		const message = argv.flags.message ?? await getCurrentCommitMessage();
 
 		if (baseBranch === currentBranch) {
@@ -80,9 +86,13 @@ cli({
 			await squash(baseBranch, message);
 		}
 
+		const newCommit = await getCurrentCommitHash();
+
 		console.log(
-			`${green('✔')} Successfully squashed with message:`
-			+ `\n${gray(message)}\n`
+			`${green('✔')} Successfully squashed!`
+			+ `\nCommit: ${gray(newCommit)}`
+			+ '\nMessage:'
+			+ `\n${gray(message.trim())}\n`
 			+ '\nTo revert back to the original commit:'
 			+ `\n${gray(`git reset --hard ${currentCommit}`)}\n`
 			+ '\nIf you use a remote, don\'t forget to force push:'

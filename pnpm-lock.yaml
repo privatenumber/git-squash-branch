@@ -1,6 +1,7 @@
 lockfileVersion: 5.4
 
 specifiers:
+  '@clack/prompts': ^0.0.8
   '@pvtnbr/eslint-config': ^0.33.0
   '@types/node': ^18.11.18
   '@types/prompts': ^2.4.2
@@ -25,6 +26,7 @@ dependencies:
   tasuku: 2.0.1
 
 devDependencies:
+  '@clack/prompts': 0.0.8
   '@pvtnbr/eslint-config': 0.33.0_7uibuqfxkfaozanbtbziikiqje
   '@types/node': 18.11.18
   '@types/prompts': 2.4.2
@@ -68,6 +70,21 @@ packages:
       '@babel/helper-validator-identifier': 7.16.7
       chalk: 2.4.2
       js-tokens: 4.0.0
+    dev: true
+
+  /@clack/core/0.0.12:
+    resolution: {integrity: sha512-hmIOiVhplnGLeQqbMwMIIc0sF7LaQq2NYnnflEiFvCrXsJD4wDFaTTVqXdIxver8npJtmFZ2R6L22ipf1l+nAQ==}
+    dependencies:
+      picocolors: 1.0.0
+      sisteransi: 1.0.5
+    dev: true
+
+  /@clack/prompts/0.0.8:
+    resolution: {integrity: sha512-VAO3X8HAgeQPsi0gFg4X8LhuZNKx7GFQFMjhe+QKUtus7byEubDARnpGu0wU4fukhMlF74OKWSwRTCPRUtOs6A==}
+    dependencies:
+      '@clack/core': 0.0.12
+      picocolors: 1.0.0
+      sisteransi: 1.0.5
     dev: true
 
   /@esbuild-kit/cjs-loader/2.4.1:
@@ -3086,7 +3103,6 @@ packages:
 
   /sisteransi/1.0.5:
     resolution: {integrity: sha512-bLGGlR1QxBcynn2d5YmDX4MGjlZvy2MRBDRNHLJ8VI6l6+9FUiyTFNJ0IveOSP0bcXgVDPRcfGqA0pjaqUpfVg==}
-    dev: false
 
   /slash/3.0.0:
     resolution: {integrity: sha512-g9Q1haeby36OSStwb4ntCGGGaKsaVSjQ68fBxoQcutl5fS1vuY18H3wSt3jFyFtrkx+Kz0V1G85A4MyAdDMi2Q==}
