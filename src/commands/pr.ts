@@ -73,20 +73,19 @@ const isNumber = /^\d+$/.test(prReference);
 const fetchedPr = await task(
 	`Fetching PR ${isNumber ? '#' : ''}${prReference}`,
 	() => getPrInfo(prReference).catch(throwWithSubprocessOutput),
-);
-fetchedPr.clear();
+).clear();
 
-if (fetchedPr.result.isCrossRepository) {
+if (fetchedPr.isCrossRepository) {
 	throw new Error('Fork pull requests are not supported because their head branches are not on the selected remote.');
 }
 
 const { stdout: currentBranch } = await spawn('git', ['branch', '--show-current']);
 const {
 	baseRefName, headRefName, headRefOid, title, url, number,
-} = fetchedPr.result;
+} = fetchedPr;
 const message = argv.flags.message || `${title} (#${number})`;
 
-const fetchRemote = await task(
+await task(
 	`Fetching branches from remote ${stringify(remote)}`,
 	() => spawn('git', [
 		'fetch',
@@ -94,8 +93,7 @@ const fetchRemote = await task(
 		`refs/heads/${baseRefName}:refs/remotes/${remote}/${baseRefName}`,
 		`refs/heads/${headRefName}:refs/remotes/${remote}/${headRefName}`,
 	]).catch(throwWithSubprocessOutput),
-);
-fetchRemote.clear();
+).clear();
 
 const temporaryBranch = `${currentBranch}_${Date.now()}`;
 let checkedOutTemporaryBranch = false;
@@ -105,14 +103,13 @@ try {
 	await spawn('git', ['checkout', remoteBranch, '-b', temporaryBranch]);
 	checkedOutTemporaryBranch = true;
 
-	const squashBranch = await task(
+	await task(
 		'Squashing PR',
 		() => squash(`${remote}/${baseRefName}`, message).catch(throwWithSubprocessOutput),
-	);
-	squashBranch.clear();
+	).clear();
 	squashedHead = await getCurrentCommitHash();
 
-	const pushToRemote = await task(
+	await task(
 		`Pushing to remote ${stringify(remote)}`,
 		() => spawn('git', [
 			'push',
@@ -121,15 +118,13 @@ try {
 			remote,
 			`refs/heads/${temporaryBranch}:refs/heads/${headRefName}`,
 		]).catch(throwWithSubprocessOutput),
-	);
-	pushToRemote.clear();
+	).clear();
 } finally {
 	if (checkedOutTemporaryBranch) {
-		const revertBranch = await task(`Switching branch back to ${stringify(currentBranch)}`, async () => {
+		await task(`Switching branch back to ${stringify(currentBranch)}`, async () => {
 			await spawn('git', ['checkout', '-f', currentBranch]);
 			await spawn('git', ['branch', '-D', temporaryBranch]);
-		});
-		revertBranch.clear();
+		}).clear();
 	}
 }
 

@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       tasuku:
-        specifier: ^2.0.1
-        version: 2.3.0
+        specifier: 3.0.0-beta.5
+        version: 3.0.0-beta.5
     devDependencies:
       '@clack/prompts':
         specifier: ^0.0.8
@@ -3460,8 +3460,9 @@ packages:
     resolution: {integrity: sha512-uxc/zpqFg6x7C8vOE7lh6Lbda8eEL9zmVm/PLeTPBRhh1xCgdWaQ+J1CUieGpIfm2HdtsUpRv+HshiasBMcc6A==}
     engines: {node: '>=6'}
 
-  tasuku@2.3.0:
-    resolution: {integrity: sha512-9Jtk+XAnttslCw4i9RceSZGr2PT5TLn0vUyWnoP2SdlSYzkiYRY6kB5qnPi5IQ/Em8e4oBow1rpaA39iijTIrA==}
+  tasuku@3.0.0-beta.5:
+    resolution: {integrity: sha512-y5tQGUy1eeeF4f3EiKrhqiDdFVnBA9/aAw86fFft2xJeszfSdY6o845kvBRmJOY8PdAt8gEm4h9iYnMG6lRGsw==}
+    engines: {node: '>=20.20'}
 
   temp-dir@3.0.0:
     resolution: {integrity: sha512-nHc6S/bwIilKHNRgK/3jlhDoIHcp45YgyiwcAk46Tr0LfEqGBVpmiAyuiuxeVE44m3mXnEeVhaipLOEWmH+Njw==}
@@ -7486,7 +7487,7 @@ snapshots:
 
   tapable@2.3.3: {}
 
-  tasuku@2.3.0: {}
+  tasuku@3.0.0-beta.5: {}
 
   temp-dir@3.0.0: {}
 

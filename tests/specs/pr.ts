@@ -78,7 +78,7 @@ export default testSuite(({ describe }) => {
 				env: gh.env,
 			}));
 
-			expect(error.stdout).toMatch('stale info');
+			expect(error.stderr).toMatch('stale info');
 			const { stdout: currentBranch } = await runner.git('branch', ['--show-current']);
 			const { stdout: temporaryBranches } = await runner.git('branch', ['--list', 'master_*']);
 			const { stdout: remoteBranch } = await runner.git('ls-remote', ['origin', 'refs/heads/branch-a']);
