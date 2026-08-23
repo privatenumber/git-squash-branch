@@ -11,10 +11,9 @@ import {
 	getRemoteDefaultBranch,
 	squash,
 } from './utils.js';
-import { pr } from './pr.js';
 
 cli({
-	name: 'git-squash-branch',
+	name: packageJson.name,
 
 	version: packageJson.version,
 
@@ -41,73 +40,76 @@ cli({
 		description: packageJson.description,
 	},
 
-	commands: [
-		pr,
-	],
-}, (argv) => {
-	(async () => {
-		await assertCleanTree();
+	commands: {
+		pr: () => import('./commands/pr.js'),
+	},
+}, async (argv) => {
+	if (argv.command) {
+		await argv.runCommand();
+		return;
+	}
 
-		let { base: baseBranch } = argv.flags;
+	await assertCleanTree();
 
-		if (!baseBranch) {
-			const s = spinner();
+	let { base: baseBranch } = argv.flags;
 
-			s.start(`Detecting default branch from remote ${stringify(argv.flags.remote)}`);
+	if (!baseBranch) {
+		const s = spinner();
 
-			const detectedDefaultBranch = await getRemoteDefaultBranch(argv.flags.remote);
+		s.start(`Detecting default branch from remote ${stringify(argv.flags.remote)}`);
 
-			s.stop(`Detected base branch: ${detectedDefaultBranch}`);
+		const detectedDefaultBranch = await getRemoteDefaultBranch(argv.flags.remote);
 
-			if (detectedDefaultBranch) {
-				const confirmed = await confirm({
-					message: `Squash commits compared to ${stringify(detectedDefaultBranch)}?`,
-				});
+		s.stop(`Detected base branch: ${detectedDefaultBranch}`);
 
-				if (confirmed) {
-					baseBranch = detectedDefaultBranch;
-				}
+		if (detectedDefaultBranch) {
+			const confirmed = await confirm({
+				message: `Squash commits compared to ${stringify(detectedDefaultBranch)}?`,
+			});
+
+			if (confirmed) {
+				baseBranch = detectedDefaultBranch;
 			}
 		}
+	}
 
-		if (!baseBranch) {
-			throw new Error('Missing base branch. Specify it manually with the --base flag.');
-		}
+	if (!baseBranch) {
+		throw new Error('Missing base branch. Specify it manually with the --base flag.');
+	}
 
-		const { stdout: currentBranch } = await spawn('git', ['branch', '--show-current']);
-		const currentCommit = await getCurrentCommitHash();
-		const message = argv.flags.message ?? await getCurrentCommitMessage();
+	const { stdout: currentBranch } = await spawn('git', ['branch', '--show-current']);
+	const currentCommit = await getCurrentCommitHash();
+	const message = argv.flags.message ?? await getCurrentCommitMessage();
 
-		if (baseBranch === currentBranch) {
-			console.log('Current branch is the same as base branch. Squashing all commits to root.');
-			const { stdout: orphanCommit } = await spawn('git', ['commit-tree', 'HEAD^{tree}', '-m', message]);
-			await spawn('git', ['reset', orphanCommit]);
-		} else {
-			await spawn('git', [
-				'fetch',
-				argv.flags.remote,
-				`refs/heads/${baseBranch}:refs/remotes/${argv.flags.remote}/${baseBranch}`,
-			]);
-			await squash(`${argv.flags.remote}/${baseBranch}`, message);
-		}
+	if (baseBranch === currentBranch) {
+		console.log('Current branch is the same as base branch. Squashing all commits to root.');
+		const { stdout: orphanCommit } = await spawn('git', ['commit-tree', 'HEAD^{tree}', '-m', message]);
+		await spawn('git', ['reset', orphanCommit]);
+	} else {
+		await spawn('git', [
+			'fetch',
+			argv.flags.remote,
+			`refs/heads/${baseBranch}:refs/remotes/${argv.flags.remote}/${baseBranch}`,
+		]);
+		await squash(`${argv.flags.remote}/${baseBranch}`, message);
+	}
 
-		const newCommit = await getCurrentCommitHash();
+	const newCommit = await getCurrentCommitHash();
 
-		console.log(
-			`${green('✔')} Successfully squashed!`
-			+ `\nCommit: ${gray(newCommit)}`
-			+ '\nMessage:'
-			+ `\n${gray(message.trim())}\n`
-			+ '\nTo revert back to the original commit:'
-			+ `\n${gray(`git reset --hard ${currentCommit}`)}\n`
-			+ '\nIf you use a remote, force push only if it has not changed since your last fetch:'
-			+ `\n${gray(`git push --force-with-lease ${argv.flags.remote} ${currentBranch}`)}`,
-		);
-	})().catch((error) => {
-		const message = error instanceof SubprocessError && error.stderr
-			? `${error.message}\n${error.stderr}`
-			: error.message;
-		console.error(`${red('✖')} ${message}`);
-		process.exitCode = 1;
-	});
+	console.log(
+		`${green('✔')} Successfully squashed!`
+		+ `\nCommit: ${gray(newCommit)}`
+		+ '\nMessage:'
+		+ `\n${gray(message.trim())}\n`
+		+ '\nTo revert back to the original commit:'
+		+ `\n${gray(`git reset --hard ${currentCommit}`)}\n`
+		+ '\nIf you use a remote, force push only if it has not changed since your last fetch:'
+		+ `\n${gray(`git push --force-with-lease ${argv.flags.remote} ${currentBranch}`)}`,
+	);
+}).catch((error) => {
+	const message = error instanceof SubprocessError && error.stderr
+		? `${error.message}\n${error.stderr}`
+		: error.message;
+	console.error(`${red('✖')} ${message}`);
+	process.exitCode = 1;
 });
