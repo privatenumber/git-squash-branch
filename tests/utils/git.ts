@@ -3,7 +3,7 @@ import path from 'node:path';
 import { createFixture } from 'fs-fixture';
 import spawn, { SubprocessError, type Options, type Subprocess } from 'nano-spawn';
 
-const squashPath = path.resolve('dist/index.cjs');
+const squashPath = path.resolve('dist/index.mjs');
 
 type Git = (command: string, args?: string[], options?: Options) => Subprocess;
 

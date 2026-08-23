@@ -1,6 +1,6 @@
 import { cli } from 'cleye';
 import task from 'tasuku';
-import { green, gray, red } from 'ansis';
+import { green, gray } from 'ansis';
 import spawn, { SubprocessError } from 'nano-spawn';
 import terminalLink from 'terminal-link';
 import {
@@ -61,7 +61,7 @@ const argv = cli({
 	},
 });
 
-(async () => {
+await (async () => {
 	await assertCleanTree();
 	await assertHasGh();
 
@@ -142,10 +142,4 @@ const argv = cli({
 		+ '\nIf you have the branch locally, hard-reset it to the squashed remote branch:'
 		+ `\n${gray(`git checkout ${headRefName} && git reset --hard ${remote}/${headRefName}`)}`,
 	);
-})().catch((error) => {
-	const message = error instanceof SubprocessError && error.stderr
-		? `${error.message}\n${error.stderr}`
-		: error.message;
-	console.error(`${red('✖')} ${message}`);
-	process.exitCode = 1;
-});
+})();

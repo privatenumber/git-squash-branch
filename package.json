@@ -18,11 +18,11 @@
 		"dist"
 	],
 	"type": "module",
-	"bin": "dist/index.cjs",
+	"bin": "dist/index.mjs",
 	"packageManager": "pnpm@10.33.2",
 	"scripts": {
 		"prepare": "simple-git-hooks",
-		"build": "pkgroll --minify --target=node22.22",
+		"build": "pkgroll --clean-dist --minify --target=node22.22",
 		"lint": "lintroll",
 		"test": "tsx tests",
 		"type-check": "tsc --noEmit",
