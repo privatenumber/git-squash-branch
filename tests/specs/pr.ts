@@ -1,3 +1,4 @@
+import path from 'node:path';
 import { expect, testSuite } from 'manten';
 import {
 	cloneRepository,
@@ -39,6 +40,18 @@ const createPullRequestRepository = async () => {
 
 export default testSuite(({ describe }) => {
 	describe('pr', ({ test }) => {
+		test('reports installation instructions when GitHub CLI is unavailable', async () => {
+			const { fixture } = await createRepository();
+			const error = await getSubprocessError(runCli(['pr', '1'], fixture.path, {
+				env: {
+					PATH: path.dirname(process.execPath),
+				},
+			}));
+
+			expect(error.stderr).toMatch('You must have GitHub CLI installed to use this command: https://cli.github.com');
+			await fixture.rm();
+		});
+
 		test('squashes the remote branch without changing local state', async () => {
 			const { remote, author } = await createPullRequestRepository();
 			const runner = await cloneRepository(remote.repositoryPath);

@@ -2,25 +2,29 @@ import spawn, { SubprocessError } from 'nano-spawn';
 
 export const { stringify } = JSON;
 
-export const getCurrentCommitMessage = async () => {
-	const { stdout } = await spawn('git', ['--no-pager', 'log', '-1', '--pretty=%B']);
+export const getCurrentCommitMessage = async (commit: string) => {
+	const { stdout } = await spawn('git', ['--no-pager', 'log', '-1', '--pretty=%B', commit]);
 	return stdout;
 };
 
-export const getCurrentCommitHash = async () => {
-	const { stdout } = await spawn('git', ['rev-parse', 'HEAD']);
-	return stdout;
-};
+export const getCurrentBranchState = async () => {
+	const { stdout } = await spawn('git', ['status', '--porcelain=v2', '--branch']);
+	const currentBranch = stdout.match(/^# branch\.head (.+)$/m)?.[1];
 
-export const getCurrentBranch = async () => {
-	const { stdout } = await spawn('git', ['symbolic-ref', '--quiet', '--short', 'HEAD']).catch((error) => {
-		if (error instanceof SubprocessError && error.exitCode === 1) {
-			throw new Error('Cannot squash from a detached HEAD');
-		}
+	if (currentBranch === '(detached)') {
+		throw new Error('Cannot squash from a detached HEAD');
+	}
 
-		throw error;
-	});
-	return stdout;
+	const currentCommit = stdout.match(/^# branch\.oid (.+)$/m)?.[1];
+
+	if (!currentBranch || !currentCommit || currentCommit === '(initial)') {
+		throw new Error('Cannot determine the current branch and commit');
+	}
+
+	return {
+		currentBranch,
+		currentCommit,
+	};
 };
 
 export const createCommit = async (

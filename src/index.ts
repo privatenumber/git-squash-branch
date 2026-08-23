@@ -7,8 +7,7 @@ import {
 	stringify,
 	assertCleanTree,
 	getCurrentCommitMessage,
-	getCurrentCommitHash,
-	getCurrentBranch,
+	getCurrentBranchState,
 	getRemoteDefaultBranch,
 	createCommit,
 } from './utils.js';
@@ -28,7 +27,7 @@ const argv = cli({
 		base: {
 			type: String,
 			alias: 'b',
-			description: 'Base branch to compare against. If not specified, will try to detect it from remote "origin".',
+			description: 'Base branch to compare against. If not specified, will try to detect it from the selected remote.',
 		},
 		message: {
 			type: String,
@@ -90,11 +89,8 @@ const argv = cli({
 		throw new Error('Missing base branch. Specify it manually with the --base flag.');
 	}
 
-	const [currentBranch, currentCommit, message] = await Promise.all([
-		getCurrentBranch(),
-		getCurrentCommitHash(),
-		argv.flags.message ?? getCurrentCommitMessage(),
-	]);
+	const { currentBranch, currentCommit } = await getCurrentBranchState();
+	const message = argv.flags.message ?? await getCurrentCommitMessage(currentCommit);
 	let newCommit: string;
 
 	if (baseBranch === currentBranch) {

@@ -178,7 +178,7 @@ export default testSuite(({ describe }) => {
 			await fixture.rm();
 		});
 
-		test('restores the branch when the squash commit fails', async () => {
+		test('leaves the branch unchanged when commit creation fails', async () => {
 			const { fixture, git } = await createRepository();
 			const remote = await createBareRepository();
 

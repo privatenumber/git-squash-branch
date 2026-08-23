@@ -20,16 +20,16 @@ type PrData = {
 };
 
 const getPrInfo = async (number: string) => {
-	const { stdout } = await spawn('gh', ['pr', 'view', number, '--json', properties.join(',')]);
-	return JSON.parse(stdout) as PrData;
-};
+	try {
+		const { stdout } = await spawn('gh', ['pr', 'view', number, '--json', properties.join(',')]);
+		return JSON.parse(stdout) as PrData;
+	} catch (error) {
+		if (error instanceof SubprocessError && (error.cause as NodeJS.ErrnoException | undefined)?.code === 'ENOENT') {
+			throw new Error('You must have GitHub CLI installed to use this command: https://cli.github.com');
+		}
 
-const throwWithSubprocessOutput = (error: unknown): never => {
-	if (error instanceof SubprocessError && error.stderr) {
-		throw new Error(`${error.message}\n${error.stderr}`);
+		throw error;
 	}
-
-	throw error;
 };
 
 export default async (parentRemote: string) => {
@@ -61,7 +61,7 @@ export default async (parentRemote: string) => {
 
 	const fetchedPr = await task(
 		`Fetching PR ${isNumber ? '#' : ''}${prReference}`,
-		() => getPrInfo(prReference).catch(throwWithSubprocessOutput),
+		() => getPrInfo(prReference),
 	).clear();
 
 	if (fetchedPr.isCrossRepository) {
@@ -80,7 +80,7 @@ export default async (parentRemote: string) => {
 			remote,
 			`refs/heads/${baseRefName}:refs/remotes/${remote}/${baseRefName}`,
 			`refs/heads/${headRefName}:refs/remotes/${remote}/${headRefName}`,
-		]).catch(throwWithSubprocessOutput),
+		]),
 	).clear();
 
 	const squashedHead = await task('Squashing PR', async () => {
@@ -96,7 +96,7 @@ export default async (parentRemote: string) => {
 			`--force-with-lease=refs/heads/${headRefName}:${headRefOid}`,
 			remote,
 			`${squashedHead}:refs/heads/${headRefName}`,
-		]).catch(throwWithSubprocessOutput),
+		]),
 	).clear();
 
 	console.log(
