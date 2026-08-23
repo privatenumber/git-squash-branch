@@ -1,6 +1,6 @@
 import { cli } from 'cleye';
 import task from 'tasuku';
-import { green, gray } from 'ansis';
+import { green, gray, red } from 'ansis';
 import spawn, { SubprocessError } from 'nano-spawn';
 import terminalLink from 'terminal-link';
 import {
@@ -42,7 +42,7 @@ const throwWithSubprocessOutput = (error: unknown): never => {
 	throw error;
 };
 
-export default () => cli({
+const argv = cli({
 	parameters: [
 		'<number>',
 	],
@@ -59,7 +59,9 @@ export default () => cli({
 			description: 'Message for the squash commit (defaults to PR title)',
 		},
 	},
-}, async (argv) => {
+});
+
+(async () => {
 	await assertCleanTree();
 	await assertHasGh();
 
@@ -140,4 +142,10 @@ export default () => cli({
 		+ '\nIf you have the branch locally, hard-reset it to the squashed remote branch:'
 		+ `\n${gray(`git checkout ${headRefName} && git reset --hard ${remote}/${headRefName}`)}`,
 	);
+})().catch((error) => {
+	const message = error instanceof SubprocessError && error.stderr
+		? `${error.message}\n${error.stderr}`
+		: error.message;
+	console.error(`${red('✖')} ${message}`);
+	process.exitCode = 1;
 });

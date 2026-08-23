@@ -12,7 +12,7 @@ import {
 	squash,
 } from './utils.js';
 
-cli({
+const argv = cli({
 	name: packageJson.name,
 
 	version: packageJson.version,
@@ -43,7 +43,13 @@ cli({
 	commands: {
 		pr: () => import('./commands/pr.js'),
 	},
-}, async (argv) => {
+
+	parameters: [
+		'[input]',
+	],
+});
+
+(async () => {
 	if (argv.command) {
 		await argv.runCommand();
 		return;
@@ -106,7 +112,7 @@ cli({
 		+ '\nIf you use a remote, force push only if it has not changed since your last fetch:'
 		+ `\n${gray(`git push --force-with-lease ${argv.flags.remote} ${currentBranch}`)}`,
 	);
-}).catch((error) => {
+})().catch((error) => {
 	const message = error instanceof SubprocessError && error.stderr
 		? `${error.message}\n${error.stderr}`
 		: error.message;
