@@ -83,7 +83,12 @@ cli({
 			const { stdout: orphanCommit } = await execa('git', ['commit-tree', 'HEAD^{tree}', '-m', message]);
 			await execa('git', ['reset', orphanCommit]);
 		} else {
-			await squash(baseBranch, message);
+			await execa('git', [
+				'fetch',
+				argv.flags.remote,
+				`refs/heads/${baseBranch}:refs/remotes/${argv.flags.remote}/${baseBranch}`,
+			]);
+			await squash(`${argv.flags.remote}/${baseBranch}`, message);
 		}
 
 		const newCommit = await getCurrentCommitHash();
@@ -95,8 +100,8 @@ cli({
 			+ `\n${gray(message.trim())}\n`
 			+ '\nTo revert back to the original commit:'
 			+ `\n${gray(`git reset --hard ${currentCommit}`)}\n`
-			+ '\nIf you use a remote, don\'t forget to force push:'
-			+ `\n${gray(`git push --force origin ${currentBranch}`)}`,
+			+ '\nIf you use a remote, force push only if it has not changed since your last fetch:'
+			+ `\n${gray(`git push --force-with-lease ${argv.flags.remote} ${currentBranch}`)}`,
 		);
 	})().catch((error) => {
 		console.error(`${red('✖')} ${error.message}`);

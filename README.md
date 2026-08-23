@@ -35,8 +35,8 @@ feat: my new feature
 To revert back to the original commit:
 git reset --hard 4f0432ffd1
 
-# Force push the squashed branch to remote
-$ git push --force
+# Force push the squashed branch to remote, unless it changed since your last fetch
+$ git push --force-with-lease
 ```
 
 #### Example: squashing all commits in current branch
@@ -52,8 +52,8 @@ feat: init
 To revert back to the original commit:
 git reset --hard 4f0432ffd1
 
-# Force push the squashed branch to remote
-$ git push --force
+# Force push the squashed branch to remote, unless it changed since your last fetch
+$ git push --force-with-lease
 ```
 
 ### Squash PR
@@ -64,7 +64,7 @@ From inside the repository directory, pass in the PR number, URL, or branch:
 npx git-squash-branch pr [<number> | <url> | <branch>]
 ```
 
-It will squash the PR branch into a single commit and force push it back to the PR branch.
+It will squash the PR branch into a single commit and force push it back to the PR branch. The command rejects pull requests from forks because their head branches are not on the selected remote.
 
 #### Example
 ```sh
@@ -77,7 +77,7 @@ $ npx git-squash-branch pr 1234
 feat: my PR title
 
 To revert the PR back to the original commit:
-git push -f origin 4f0432ffd1:pr-branch-name
+git push --force-with-lease=refs/heads/pr-branch-name:<squashed-commit> origin 4f0432ffd1:refs/heads/pr-branch-name
 ```
 
 > Note: This command will not update the PR with the latest base branch.
@@ -93,8 +93,9 @@ Commands:
 
 Flags:
   -b, --base <string>
-  Base branch to compare against. If not specified, will try to
-  detect it from remote "origin".
+Base branch to compare against. The command fetches this branch
+from the selected remote. If not specified, it will try to detect
+it from remote "origin".
 
   -h, --help
   Show help

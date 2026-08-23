@@ -27,7 +27,7 @@ export const getRemoteDefaultBranch = async (remote: string) => {
 };
 
 export const assertCleanTree = async () => {
-	const { stdout } = await execa('git', ['status', '--porcelain', '--untracked-files=no']).catch((error) => {
+	const { stdout } = await execa('git', ['status', '--porcelain']).catch((error) => {
 		if (error.stderr.includes('not a git repository')) {
 			throw new Error('Not in a git repository');
 		}
@@ -44,6 +44,8 @@ export const squash = async (
 	baseBranch: string,
 	message: string,
 ) => {
+	const currentCommit = await getCurrentCommitHash();
+
 	/**
 	 * Instead of soft-resetting to the latest base branch (e.g. origin/master),
 	 * we to reset the best common ancestor between the base & current branch.
@@ -71,5 +73,10 @@ export const squash = async (
 	 * --no-verify to skip pre-commit hooks
 	 * Since the code is already committed, we don't need to run them again
 	 */
-	await execa('git', ['commit', '--no-verify', '--message', message]);
+	try {
+		await execa('git', ['commit', '--no-verify', '--message', message]);
+	} catch (error) {
+		await execa('git', ['reset', '--hard', currentCommit]);
+		throw error;
+	}
 };
