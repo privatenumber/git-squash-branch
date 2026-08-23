@@ -10,6 +10,29 @@ import {
 
 export default testSuite(({ describe }) => {
 	describe('squash', ({ test }) => {
+		test('rejects a detached HEAD', async () => {
+			const { fixture, git } = await createRepository();
+			const remote = await createBareRepository();
+
+			await git('add', ['file']);
+			await git('commit', ['-am', 'commit-1']);
+			await git('remote', ['add', 'origin', remote.repositoryPath]);
+			await git('push', ['-u', 'origin', 'master']);
+			await git('checkout', ['-b', 'branch-a']);
+			await fixture.writeFile('file', 'branch');
+			await git('commit', ['-am', 'commit-2']);
+			await git('checkout', ['--detach']);
+			const { stdout: head } = await git('rev-parse', ['HEAD']);
+
+			const error = await getSubprocessError(runCli(['-b', 'master', '-m', 'squash!'], fixture.path));
+
+			expect(error.stderr).toMatch('Cannot squash from a detached HEAD');
+			const { stdout: currentHead } = await git('rev-parse', ['HEAD']);
+			expect(currentHead).toBe(head);
+			await fixture.rm();
+			await remote.fixture.rm();
+		});
+
 		test('rejects an unknown command', async () => {
 			const { fixture, git } = await createRepository();
 

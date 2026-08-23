@@ -12,6 +12,17 @@ export const getCurrentCommitHash = async () => {
 	return stdout;
 };
 
+export const getCurrentBranch = async () => {
+	const { stdout } = await spawn('git', ['symbolic-ref', '--quiet', '--short', 'HEAD']).catch((error) => {
+		if (error instanceof SubprocessError && error.exitCode === 1) {
+			throw new Error('Cannot squash from a detached HEAD');
+		}
+
+		throw error;
+	});
+	return stdout;
+};
+
 export const createCommit = async (
 	sourceCommit: string,
 	message: string,
@@ -59,43 +70,4 @@ export const assertCleanTree = async () => {
 	if (stdout) {
 		throw new Error('Working tree is not clean');
 	}
-};
-
-export const squash = async (
-	baseBranch: string,
-	message: string,
-) => {
-	const currentCommit = await getCurrentCommitHash();
-
-	/**
-	 * Instead of soft-resetting to the latest base branch (e.g. origin/master),
-	 * we to reset the best common ancestor between the base & current branch.
-	 *
-	 * If we soft-reset to origin/master, it's possible changes made in origin/master
-	 * to irrelevant files will be reverted back to the state of the current branch.
-	 */
-	const {
-		stdout: bestCommonAncestor,
-	} = await spawn('git', ['merge-base', baseBranch, 'HEAD']);
-
-	/**
-	 * Soft reset to move the index back to the common ancestor
-	 *
-	 * Reset using soft mode so all the changes remain staged,
-	 * so we can commit without adding them back.
-	 *
-	 * Some sources don't use `--soft`, which defaults to `--mixed`,
-	 * but mixed mode unstages all changes, and we cannot automatically
-	 * stage them back.
-	 */
-	await spawn('git', ['reset', '--soft', bestCommonAncestor]);
-
-	/**
-	 * --no-verify to skip pre-commit hooks
-	 * Since the code is already committed, we don't need to run them again
-	 */
-	await spawn('git', ['commit', '--no-verify', '--message', message]).catch(async (error) => {
-		await spawn('git', ['reset', '--hard', currentCommit]);
-		throw error;
-	});
 };

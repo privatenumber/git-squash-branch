@@ -8,8 +8,9 @@ import {
 	assertCleanTree,
 	getCurrentCommitMessage,
 	getCurrentCommitHash,
+	getCurrentBranch,
 	getRemoteDefaultBranch,
-	squash,
+	createCommit,
 } from './utils.js';
 
 const argv = cli({
@@ -87,24 +88,27 @@ const argv = cli({
 		throw new Error('Missing base branch. Specify it manually with the --base flag.');
 	}
 
-	const { stdout: currentBranch } = await spawn('git', ['branch', '--show-current']);
-	const currentCommit = await getCurrentCommitHash();
-	const message = argv.flags.message ?? await getCurrentCommitMessage();
+	const [currentBranch, currentCommit, message] = await Promise.all([
+		getCurrentBranch(),
+		getCurrentCommitHash(),
+		argv.flags.message ?? getCurrentCommitMessage(),
+	]);
+	let newCommit: string;
 
 	if (baseBranch === currentBranch) {
 		console.log('Current branch is the same as base branch. Squashing all commits to root.');
-		const { stdout: orphanCommit } = await spawn('git', ['commit-tree', 'HEAD^{tree}', '-m', message]);
-		await spawn('git', ['reset', orphanCommit]);
+		newCommit = await createCommit(currentCommit, message);
 	} else {
 		await spawn('git', [
 			'fetch',
 			argv.flags.remote,
 			`refs/heads/${baseBranch}:refs/remotes/${argv.flags.remote}/${baseBranch}`,
 		]);
-		await squash(`${argv.flags.remote}/${baseBranch}`, message);
+		const { stdout: bestCommonAncestor } = await spawn('git', ['merge-base', `${argv.flags.remote}/${baseBranch}`, currentCommit]);
+		newCommit = await createCommit(currentCommit, message, bestCommonAncestor);
 	}
 
-	const newCommit = await getCurrentCommitHash();
+	await spawn('git', ['update-ref', `refs/heads/${currentBranch}`, newCommit, currentCommit]);
 
 	console.log(
 		`${green('✔')} Successfully squashed!`
