@@ -1,7 +1,6 @@
 {
 	"name": "git-squash-branch",
 	"version": "0.0.0-semantic-release",
-	"packageManager": "pnpm@10.33.2",
 	"description": "Squash commits in a Git branch or pull-request",
 	"keywords": [
 		"git",
@@ -15,48 +14,41 @@
 		"name": "Hiroki Osame",
 		"email": "hiroki.osame@gmail.com"
 	},
-	"type": "module",
 	"files": [
 		"dist"
 	],
+	"type": "module",
 	"bin": "dist/index.cjs",
+	"packageManager": "pnpm@10.33.2",
 	"scripts": {
 		"prepare": "simple-git-hooks",
 		"build": "pkgroll --minify --target=node12.19",
-		"lint": "eslint --cache .",
+		"lint": "lintroll",
 		"test": "tsx tests",
 		"type-check": "tsc --noEmit",
 		"prepack": "pnpm build && clean-pkg-json"
 	},
 	"simple-git-hooks": {
-		"pre-commit": "pnpm lint-staged"
-	},
-	"lint-staged": {
-		"*.{js,ts}": "eslint --cache"
+		"pre-commit": "pnpm exec lintroll --staged"
 	},
 	"dependencies": {
 		"tasuku": "^2.0.1"
 	},
 	"devDependencies": {
 		"@clack/prompts": "^0.0.8",
-		"@pvtnbr/eslint-config": "^0.33.0",
-		"@types/node": "^18.11.18",
+		"@types/node": "^24.13.3",
 		"@types/prompts": "^2.4.2",
 		"clean-pkg-json": "^1.2.0",
 		"cleye": "^1.3.1",
-		"eslint": "^8.32.0",
 		"execa": "^6.1.0",
 		"fs-fixture": "^1.2.0",
 		"kolorist": "^1.6.0",
-		"lint-staged": "^13.1.0",
+		"lintroll": "^1.31.1",
 		"manten": "^0.6.1",
-		"pkgroll": "^1.8.1",
+		"pkgroll": "^2.27.1",
 		"simple-git-hooks": "^2.8.1",
 		"terminal-link": "^3.0.0",
-		"tsx": "^3.12.2",
-		"typescript": "^4.9.4"
-	},
-	"eslintConfig": {
-		"extends": "@pvtnbr"
+		"tsx": "^4.23.12",
+		"typescript": "^5.9.3"
 	}
 }

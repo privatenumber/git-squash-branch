@@ -2,7 +2,7 @@ import { execa } from 'execa';
 import { cli } from 'cleye';
 import { spinner, confirm } from '@clack/prompts';
 import { green, red, gray } from 'kolorist';
-import { version, description } from '../package.json';
+import packageJson from '../package.json';
 import {
 	stringify,
 	assertCleanTree,
@@ -16,7 +16,7 @@ import { pr } from './pr.js';
 cli({
 	name: 'git-squash-branch',
 
-	version,
+	version: packageJson.version,
 
 	flags: {
 		remote: {
@@ -38,7 +38,7 @@ cli({
 	},
 
 	help: {
-		description,
+		description: packageJson.description,
 	},
 
 	commands: [
