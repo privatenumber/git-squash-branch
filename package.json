@@ -1,6 +1,7 @@
 {
 	"name": "git-squash-branch",
 	"version": "0.0.0-semantic-release",
+	"packageManager": "pnpm@10.33.2",
 	"description": "Squash commits in a Git branch or pull-request",
 	"keywords": [
 		"git",
