@@ -45,6 +45,8 @@ const argv = cli({
 		pr: () => import('./commands/pr.js'),
 	},
 
+	strictFlags: true,
+
 	parameters: [
 		'[input]',
 	],

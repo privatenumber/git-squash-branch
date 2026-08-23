@@ -57,6 +57,8 @@ export default async (parentRemote: string) => {
 				description: 'Message for the squash commit (defaults to PR title)',
 			},
 		},
+
+		strictFlags: true,
 	});
 
 	await assertHasGh();
