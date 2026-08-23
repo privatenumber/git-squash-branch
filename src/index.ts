@@ -1,6 +1,6 @@
 import { cli } from 'cleye';
 import { spinner, confirm } from '@clack/prompts';
-import { green, red, gray } from 'kolorist';
+import { green, red, gray } from 'ansis';
 import spawn, { SubprocessError } from 'nano-spawn';
 import packageJson from '../package.json';
 import {

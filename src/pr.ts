@@ -1,6 +1,6 @@
 import { command } from 'cleye';
 import task from 'tasuku';
-import { green, gray, red } from 'kolorist';
+import { green, gray, red } from 'ansis';
 import spawn, { SubprocessError } from 'nano-spawn';
 import terminalLink from 'terminal-link';
 import {
