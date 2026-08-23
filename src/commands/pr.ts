@@ -5,9 +5,7 @@ import spawn, { SubprocessError } from 'nano-spawn';
 import terminalLink from 'terminal-link';
 import {
 	stringify,
-	assertCleanTree,
-	getCurrentCommitHash,
-	squash,
+	createCommit,
 } from '../utils.js';
 
 const assertHasGh = async () => {
@@ -61,7 +59,6 @@ export default async (parentRemote: string) => {
 		},
 	});
 
-	await assertCleanTree();
 	await assertHasGh();
 
 	const remote = argv.flags.remote ?? parentRemote;
@@ -79,7 +76,6 @@ export default async (parentRemote: string) => {
 		throw new Error('Fork pull requests are not supported because their head branches are not on the selected remote.');
 	}
 
-	const { stdout: currentBranch } = await spawn('git', ['branch', '--show-current']);
 	const {
 		baseRefName, headRefName, headRefOid, title, url, number,
 	} = fetchedPr;
@@ -95,38 +91,21 @@ export default async (parentRemote: string) => {
 		]).catch(throwWithSubprocessOutput),
 	).clear();
 
-	const temporaryBranch = `${currentBranch}_${Date.now()}`;
-	let checkedOutTemporaryBranch = false;
-	let squashedHead: string;
-	try {
-		const remoteBranch = `${remote}/${headRefName}`;
-		await spawn('git', ['checkout', remoteBranch, '-b', temporaryBranch]);
-		checkedOutTemporaryBranch = true;
+	const squashedHead = await task('Squashing PR', async () => {
+		const { stdout: base } = await spawn('git', ['merge-base', `${remote}/${baseRefName}`, `${remote}/${headRefName}`]);
+		return createCommit(`${remote}/${headRefName}`, message, base);
+	}).clear();
 
-		await task(
-			'Squashing PR',
-			() => squash(`${remote}/${baseRefName}`, message).catch(throwWithSubprocessOutput),
-		).clear();
-		squashedHead = await getCurrentCommitHash();
-
-		await task(
-			`Pushing to remote ${stringify(remote)}`,
-			() => spawn('git', [
-				'push',
-				'--no-verify',
-				`--force-with-lease=refs/heads/${headRefName}:${headRefOid}`,
-				remote,
-				`refs/heads/${temporaryBranch}:refs/heads/${headRefName}`,
-			]).catch(throwWithSubprocessOutput),
-		).clear();
-	} finally {
-		if (checkedOutTemporaryBranch) {
-			await task(`Switching branch back to ${stringify(currentBranch)}`, async () => {
-				await spawn('git', ['checkout', '-f', currentBranch]);
-				await spawn('git', ['branch', '-D', temporaryBranch]);
-			}).clear();
-		}
-	}
+	await task(
+		`Pushing to remote ${stringify(remote)}`,
+		() => spawn('git', [
+			'push',
+			'--no-verify',
+			`--force-with-lease=refs/heads/${headRefName}:${headRefOid}`,
+			remote,
+			`${squashedHead}:refs/heads/${headRefName}`,
+		]).catch(throwWithSubprocessOutput),
+	).clear();
 
 	console.log(
 		`${green('✔')} Successfully squashed ${terminalLink(`PR #${number}`, url)} with message:`

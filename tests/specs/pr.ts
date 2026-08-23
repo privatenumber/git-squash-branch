@@ -39,6 +39,40 @@ const createPullRequestRepository = async () => {
 
 export default testSuite(({ describe }) => {
 	describe('pr', ({ test }) => {
+		test('squashes the remote branch without changing local state', async () => {
+			const { remote, author } = await createPullRequestRepository();
+			const runner = await cloneRepository(remote.repositoryPath);
+			const { stdout: currentHead } = await runner.git('rev-parse', ['HEAD']);
+			const { stdout: prHead } = await author.git('rev-parse', ['branch-a']);
+			const { stdout: prTree } = await author.git('rev-parse', ['branch-a^{tree}']);
+			const { stdout: base } = await author.git('rev-parse', ['master']);
+			await runner.fixture.writeFile('file', 'local change');
+			await runner.fixture.writeFile('untracked', '');
+			const gh = await createGh(createPullRequest(prHead));
+
+			await runCli(['pr', '1'], runner.fixture.path, {
+				env: gh.env,
+			});
+
+			const { stdout: status } = await runner.git('status', ['--porcelain']);
+			const { stdout: head } = await runner.git('rev-parse', ['HEAD']);
+			const { stdout: currentBranch } = await runner.git('branch', ['--show-current']);
+			await runner.git('fetch', ['origin', 'branch-a:refs/remotes/origin/branch-a']);
+			const { stdout: squashedHead } = await runner.git('rev-parse', ['origin/branch-a']);
+			const { stdout: squashedTree } = await runner.git('rev-parse', ['origin/branch-a^{tree}']);
+			const { stdout: squashedParent } = await runner.git('rev-parse', ['origin/branch-a^']);
+			expect(status).toStrictEqual(' M file\n?? untracked');
+			expect(head).toBe(currentHead);
+			expect(currentBranch).toBe('master');
+			expect(squashedHead).not.toBe(prHead);
+			expect(squashedTree).toBe(prTree);
+			expect(squashedParent).toBe(base);
+			await author.fixture.rm();
+			await remote.fixture.rm();
+			await runner.fixture.rm();
+			await gh.fixture.rm();
+		});
+
 		test('uses the remote before the PR command', async () => {
 			const { remote, author } = await createPullRequestRepository();
 			const upstream = await createBareRepository();

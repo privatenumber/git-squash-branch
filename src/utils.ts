@@ -12,6 +12,22 @@ export const getCurrentCommitHash = async () => {
 	return stdout;
 };
 
+export const createCommit = async (
+	sourceCommit: string,
+	message: string,
+	parentCommit?: string,
+) => {
+	const args = ['commit-tree', `${sourceCommit}^{tree}`];
+
+	if (parentCommit) {
+		args.push('-p', parentCommit);
+	}
+
+	args.push('-m', message);
+	const { stdout } = await spawn('git', args);
+	return stdout;
+};
+
 export const getRemoteDefaultBranch = async (remote: string) => {
 	const { stdout } = await spawn(
 		'git',
