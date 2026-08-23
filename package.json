@@ -24,7 +24,7 @@
 		"prepare": "simple-git-hooks",
 		"build": "pkgroll --clean-dist --minify --target=node22.22",
 		"lint": "lintroll",
-		"test": "tsx tests",
+		"test": "pnpm build && tsx tests",
 		"type-check": "tsc --noEmit",
 		"prepack": "pnpm build && clean-pkg-json"
 	},
