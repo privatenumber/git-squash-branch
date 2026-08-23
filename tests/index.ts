@@ -1,6 +1,8 @@
 import { describe } from 'manten';
 
-await describe('git-squash-branch', ({ runTestSuite }) => {
-	runTestSuite(import('./specs/squash.js'));
-	runTestSuite(import('./specs/pr.js'));
+await describe('git-squash-branch', async () => {
+	await Promise.all([
+		import('./specs/squash.js'),
+		import('./specs/pr.js'),
+	]);
 });
