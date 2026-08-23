@@ -42,97 +42,98 @@ const throwWithSubprocessOutput = (error: unknown): never => {
 	throw error;
 };
 
-const argv = cli({
-	parameters: [
-		'<number>',
-	],
-	flags: {
-		remote: {
-			type: String,
-			alias: 'r',
-			description: 'Remote to fetch from',
-			default: 'origin',
+export default async (parentRemote: string) => {
+	const argv = cli({
+		parameters: [
+			'<number>',
+		],
+		flags: {
+			remote: {
+				type: String,
+				alias: 'r',
+				description: 'Remote to fetch from',
+			},
+			message: {
+				type: String,
+				alias: 'm',
+				description: 'Message for the squash commit (defaults to PR title)',
+			},
 		},
-		message: {
-			type: String,
-			alias: 'm',
-			description: 'Message for the squash commit (defaults to PR title)',
-		},
-	},
-});
+	});
 
-await assertCleanTree();
-await assertHasGh();
+	await assertCleanTree();
+	await assertHasGh();
 
-const { remote } = argv.flags;
+	const remote = argv.flags.remote ?? parentRemote;
 
-// Can be a number, url, or branch
-const prReference = argv._.number;
-const isNumber = /^\d+$/.test(prReference);
+	// Can be a number, url, or branch
+	const prReference = argv._.number;
+	const isNumber = /^\d+$/.test(prReference);
 
-const fetchedPr = await task(
-	`Fetching PR ${isNumber ? '#' : ''}${prReference}`,
-	() => getPrInfo(prReference).catch(throwWithSubprocessOutput),
-).clear();
-
-if (fetchedPr.isCrossRepository) {
-	throw new Error('Fork pull requests are not supported because their head branches are not on the selected remote.');
-}
-
-const { stdout: currentBranch } = await spawn('git', ['branch', '--show-current']);
-const {
-	baseRefName, headRefName, headRefOid, title, url, number,
-} = fetchedPr;
-const message = argv.flags.message || `${title} (#${number})`;
-
-await task(
-	`Fetching branches from remote ${stringify(remote)}`,
-	() => spawn('git', [
-		'fetch',
-		remote,
-		`refs/heads/${baseRefName}:refs/remotes/${remote}/${baseRefName}`,
-		`refs/heads/${headRefName}:refs/remotes/${remote}/${headRefName}`,
-	]).catch(throwWithSubprocessOutput),
-).clear();
-
-const temporaryBranch = `${currentBranch}_${Date.now()}`;
-let checkedOutTemporaryBranch = false;
-let squashedHead: string;
-try {
-	const remoteBranch = `${remote}/${headRefName}`;
-	await spawn('git', ['checkout', remoteBranch, '-b', temporaryBranch]);
-	checkedOutTemporaryBranch = true;
-
-	await task(
-		'Squashing PR',
-		() => squash(`${remote}/${baseRefName}`, message).catch(throwWithSubprocessOutput),
+	const fetchedPr = await task(
+		`Fetching PR ${isNumber ? '#' : ''}${prReference}`,
+		() => getPrInfo(prReference).catch(throwWithSubprocessOutput),
 	).clear();
-	squashedHead = await getCurrentCommitHash();
+
+	if (fetchedPr.isCrossRepository) {
+		throw new Error('Fork pull requests are not supported because their head branches are not on the selected remote.');
+	}
+
+	const { stdout: currentBranch } = await spawn('git', ['branch', '--show-current']);
+	const {
+		baseRefName, headRefName, headRefOid, title, url, number,
+	} = fetchedPr;
+	const message = argv.flags.message || `${title} (#${number})`;
 
 	await task(
-		`Pushing to remote ${stringify(remote)}`,
+		`Fetching branches from remote ${stringify(remote)}`,
 		() => spawn('git', [
-			'push',
-			'--no-verify',
-			`--force-with-lease=refs/heads/${headRefName}:${headRefOid}`,
+			'fetch',
 			remote,
-			`refs/heads/${temporaryBranch}:refs/heads/${headRefName}`,
+			`refs/heads/${baseRefName}:refs/remotes/${remote}/${baseRefName}`,
+			`refs/heads/${headRefName}:refs/remotes/${remote}/${headRefName}`,
 		]).catch(throwWithSubprocessOutput),
 	).clear();
-} finally {
-	if (checkedOutTemporaryBranch) {
-		await task(`Switching branch back to ${stringify(currentBranch)}`, async () => {
-			await spawn('git', ['checkout', '-f', currentBranch]);
-			await spawn('git', ['branch', '-D', temporaryBranch]);
-		}).clear();
-	}
-}
 
-console.log(
-	`${green('✔')} Successfully squashed ${terminalLink(`PR #${number}`, url)} with message:`
-	+ `\n${gray(message)}\n`
-	+ '\nTo revert the PR back to the original commit:'
-	+ `\n${gray(`git push --force-with-lease=refs/heads/${headRefName}:${squashedHead} ${remote} ${headRefOid}:refs/heads/${headRefName}`)}\n`
-	+ '\nIf you have the branch locally, hard-reset it to the squashed remote branch:'
-	+ `\n${gray(`git checkout ${headRefName} && git reset --hard ${remote}/${headRefName}`)}`,
-);
+	const temporaryBranch = `${currentBranch}_${Date.now()}`;
+	let checkedOutTemporaryBranch = false;
+	let squashedHead: string;
+	try {
+		const remoteBranch = `${remote}/${headRefName}`;
+		await spawn('git', ['checkout', remoteBranch, '-b', temporaryBranch]);
+		checkedOutTemporaryBranch = true;
+
+		await task(
+			'Squashing PR',
+			() => squash(`${remote}/${baseRefName}`, message).catch(throwWithSubprocessOutput),
+		).clear();
+		squashedHead = await getCurrentCommitHash();
+
+		await task(
+			`Pushing to remote ${stringify(remote)}`,
+			() => spawn('git', [
+				'push',
+				'--no-verify',
+				`--force-with-lease=refs/heads/${headRefName}:${headRefOid}`,
+				remote,
+				`refs/heads/${temporaryBranch}:refs/heads/${headRefName}`,
+			]).catch(throwWithSubprocessOutput),
+		).clear();
+	} finally {
+		if (checkedOutTemporaryBranch) {
+			await task(`Switching branch back to ${stringify(currentBranch)}`, async () => {
+				await spawn('git', ['checkout', '-f', currentBranch]);
+				await spawn('git', ['branch', '-D', temporaryBranch]);
+			}).clear();
+		}
+	}
+
+	console.log(
+		`${green('✔')} Successfully squashed ${terminalLink(`PR #${number}`, url)} with message:`
+		+ `\n${gray(message)}\n`
+		+ '\nTo revert the PR back to the original commit:'
+		+ `\n${gray(`git push --force-with-lease=refs/heads/${headRefName}:${squashedHead} ${remote} ${headRefOid}:refs/heads/${headRefName}`)}\n`
+		+ '\nIf you have the branch locally, hard-reset it to the squashed remote branch:'
+		+ `\n${gray(`git checkout ${headRefName} && git reset --hard ${remote}/${headRefName}`)}`,
+	);
+};

@@ -39,6 +39,31 @@ const createPullRequestRepository = async () => {
 
 export default testSuite(({ describe }) => {
 	describe('pr', ({ test }) => {
+		test('uses the remote before the PR command', async () => {
+			const { remote, author } = await createPullRequestRepository();
+			const upstream = await createBareRepository();
+			await author.git('remote', ['add', 'upstream', upstream.repositoryPath]);
+			await author.git('push', ['upstream', 'master', 'branch-a']);
+			const runner = await cloneRepository(remote.repositoryPath);
+			await runner.git('remote', ['add', 'upstream', upstream.repositoryPath]);
+			const { stdout: head } = await author.git('rev-parse', ['branch-a']);
+			const gh = await createGh(createPullRequest(head));
+
+			await runCli(['--remote', 'upstream', 'pr', '1'], runner.fixture.path, {
+				env: gh.env,
+			});
+
+			const { stdout: originBranch } = await runner.git('ls-remote', ['origin', 'refs/heads/branch-a']);
+			const { stdout: upstreamBranch } = await runner.git('ls-remote', ['upstream', 'refs/heads/branch-a']);
+			expect(originBranch).toMatch(head);
+			expect(upstreamBranch).not.toMatch(head);
+			await author.fixture.rm();
+			await remote.fixture.rm();
+			await upstream.fixture.rm();
+			await runner.fixture.rm();
+			await gh.fixture.rm();
+		});
+
 		test('rejects fork pull requests before mutating Git state', async () => {
 			const { remote, author } = await createPullRequestRepository();
 			const runner = await cloneRepository(remote.repositoryPath);

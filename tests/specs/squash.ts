@@ -10,6 +10,24 @@ import {
 
 export default testSuite(({ describe }) => {
 	describe('squash', ({ test }) => {
+		test('rejects an unknown command', async () => {
+			const { fixture, git } = await createRepository();
+
+			await git('add', ['file']);
+			await git('commit', ['-am', 'commit-1']);
+			await git('checkout', ['-b', 'branch-a']);
+			await fixture.writeFile('file', 'branch');
+			await git('commit', ['-am', 'commit-2']);
+			const { stdout: head } = await git('rev-parse', ['HEAD']);
+
+			const error = await getSubprocessError(runCli(['squahs', '-b', 'master', '-m', 'squash!'], fixture.path));
+
+			expect(error.stderr).toMatch('Unknown command: squahs');
+			const { stdout: currentHead } = await git('rev-parse', ['HEAD']);
+			expect(currentHead).toBe(head);
+			await fixture.rm();
+		});
+
 		test('squashes branch', async () => {
 			const { fixture, git } = await createRepository();
 			const remote = await createBareRepository();

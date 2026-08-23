@@ -51,8 +51,12 @@ const argv = cli({
 
 (async () => {
 	if (argv.command) {
-		await argv.runCommand();
+		await argv.runCommand(argv.flags.remote);
 		return;
+	}
+
+	if (argv._.input) {
+		throw new Error(`Unknown command: ${argv._.input}`);
 	}
 
 	await assertCleanTree();
