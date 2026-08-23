@@ -1,34 +1,39 @@
-import { execa } from 'execa';
+import spawn, { SubprocessError } from 'nano-spawn';
 
 export const { stringify } = JSON;
 
 export const getCurrentCommitMessage = async () => {
-	const { stdout } = await execa('git', ['--no-pager', 'log', '-1', '--pretty=%B']);
+	const { stdout } = await spawn('git', ['--no-pager', 'log', '-1', '--pretty=%B']);
 	return stdout;
 };
 
 export const getCurrentCommitHash = async () => {
-	const { stdout } = await execa('git', ['rev-parse', 'HEAD']);
+	const { stdout } = await spawn('git', ['rev-parse', 'HEAD']);
 	return stdout;
 };
 
 export const getRemoteDefaultBranch = async (remote: string) => {
-	const { stdout } = await execa(
+	const { stdout } = await spawn(
 		'git',
 		['remote', 'show', remote],
 		{
 			// In case non-English locale
 			env: { LC_ALL: 'C' },
-			reject: false,
 		},
-	);
+	).catch((error) => {
+		if (error instanceof SubprocessError) {
+			return error;
+		}
+
+		throw error;
+	});
 
 	return stdout.match(/ {2}HEAD branch: (.*)/)?.[1];
 };
 
 export const assertCleanTree = async () => {
-	const { stdout } = await execa('git', ['status', '--porcelain']).catch((error) => {
-		if (error.stderr.includes('not a git repository')) {
+	const { stdout } = await spawn('git', ['status', '--porcelain']).catch((error) => {
+		if (error instanceof SubprocessError && error.stderr.includes('not a git repository')) {
 			throw new Error('Not in a git repository');
 		}
 
@@ -55,7 +60,7 @@ export const squash = async (
 	 */
 	const {
 		stdout: bestCommonAncestor,
-	} = await execa('git', ['merge-base', baseBranch, 'HEAD']);
+	} = await spawn('git', ['merge-base', baseBranch, 'HEAD']);
 
 	/**
 	 * Soft reset to move the index back to the common ancestor
@@ -67,16 +72,14 @@ export const squash = async (
 	 * but mixed mode unstages all changes, and we cannot automatically
 	 * stage them back.
 	 */
-	await execa('git', ['reset', '--soft', bestCommonAncestor]);
+	await spawn('git', ['reset', '--soft', bestCommonAncestor]);
 
 	/**
 	 * --no-verify to skip pre-commit hooks
 	 * Since the code is already committed, we don't need to run them again
 	 */
-	try {
-		await execa('git', ['commit', '--no-verify', '--message', message]);
-	} catch (error) {
-		await execa('git', ['reset', '--hard', currentCommit]);
+	await spawn('git', ['commit', '--no-verify', '--message', message]).catch(async (error) => {
+		await spawn('git', ['reset', '--hard', currentCommit]);
 		throw error;
-	}
+	});
 };

@@ -1,14 +1,14 @@
 import { chmod } from 'node:fs/promises';
 import path from 'node:path';
-import { execa, type ExecaChildProcess, type Options } from 'execa';
 import { createFixture } from 'fs-fixture';
+import spawn, { SubprocessError, type Options, type Subprocess } from 'nano-spawn';
 
 const squashPath = path.resolve('dist/index.cjs');
 
-type Git = (command: string, args?: string[], options?: Options) => ExecaChildProcess;
+type Git = (command: string, args?: string[], options?: Options) => Subprocess;
 
 const createGit = (cwd: string): Git => (
-	(command, args, options) => execa('git', [command, ...(args ?? [])], {
+	(command, args, options) => spawn('git', [command, ...(args ?? [])], {
 		cwd,
 		...options,
 	})
@@ -38,7 +38,7 @@ export const createBareRepository = async () => {
 	const fixture = await createFixture({});
 
 	const repositoryPath = path.join(fixture.path, 'origin.git');
-	await execa('git', ['init', '--bare', '--initial-branch=master', repositoryPath]);
+	await spawn('git', ['init', '--bare', '--initial-branch=master', repositoryPath]);
 	return {
 		fixture,
 		repositoryPath,
@@ -48,7 +48,7 @@ export const createBareRepository = async () => {
 export const cloneRepository = async (repositoryPath: string) => {
 	const fixture = await createFixture({});
 
-	await execa('git', ['clone', repositoryPath, fixture.path]);
+	await spawn('git', ['clone', repositoryPath, fixture.path]);
 	const git = createGit(fixture.path);
 	await configureGit(git);
 
@@ -81,6 +81,7 @@ if (command === '--version') {
 	process.exitCode = 1;
 }
 `,
+		'gh.cmd': '@node "%~dp0gh" %*\r\n',
 	});
 	await chmod(path.join(fixture.path, 'gh'), 0o755);
 
@@ -92,7 +93,19 @@ if (command === '--version') {
 	};
 };
 
-export const runCli = (args: string[], cwd: string, options?: Options) => execa(squashPath, args, {
+export const runCli = (args: string[], cwd: string, options?: Options) => spawn(squashPath, args, {
 	cwd,
 	...options,
+});
+
+export const getSubprocessError = (subprocess: Subprocess) => subprocess.then(
+	() => {
+		throw new Error('Expected the subprocess to fail');
+	},
+).catch((error) => {
+	if (error instanceof SubprocessError) {
+		return error;
+	}
+
+	throw error;
 });

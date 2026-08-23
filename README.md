@@ -16,6 +16,8 @@ Examples:
 
 ## Usage
 
+Requires Node.js 20.17 or later.
+
 ### Squash current branch
 Run the script with [npx](https://nodejs.dev/learn/the-npx-nodejs-package-runner) from the repository branch you want to squash:
 ```

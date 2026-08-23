@@ -11,9 +11,13 @@ permissions:
 
 jobs:
   test:
-    name: Test
+    name: Test (Node.js ${{ matrix.node }})
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [20.17.0, 24.18.0]
 
     steps:
       - name: Checkout
@@ -27,7 +31,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
-          node-version-file: .nvmrc
+          node-version: ${{ matrix.node }}
           cache: pnpm
 
       - name: Install dependencies

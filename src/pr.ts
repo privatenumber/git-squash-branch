@@ -1,7 +1,7 @@
-import { execa } from 'execa';
 import { command } from 'cleye';
 import task from 'tasuku';
 import { green, gray, red } from 'kolorist';
+import spawn, { SubprocessError } from 'nano-spawn';
 import terminalLink from 'terminal-link';
 import {
 	stringify,
@@ -11,11 +11,9 @@ import {
 } from './utils.js';
 
 const assertHasGh = async () => {
-	const { failed, stdout } = await execa('gh', ['--version'], {
-		reject: false,
-	});
+	const { stdout } = await spawn('gh', ['--version']).catch(() => ({ stdout: '' }));
 
-	if (failed || !stdout.includes('https://github.com/cli/cli/releases/tag/')) {
+	if (!stdout.includes('https://github.com/cli/cli/releases/tag/')) {
 		throw new Error('You must have GitHub CLI installed to use this command: https://cli.github.com');
 	}
 };
@@ -32,8 +30,16 @@ type PrData = {
 };
 
 const getPrInfo = async (number: string) => {
-	const { stdout } = await execa('gh', ['pr', 'view', number, '--json', properties.join(',')]);
+	const { stdout } = await spawn('gh', ['pr', 'view', number, '--json', properties.join(',')]);
 	return JSON.parse(stdout) as PrData;
+};
+
+const throwWithSubprocessOutput = (error: unknown): never => {
+	if (error instanceof SubprocessError && error.stderr) {
+		throw new Error(`${error.message}\n${error.stderr}`);
+	}
+
+	throw error;
 };
 
 export const pr = command({
@@ -67,7 +73,7 @@ export const pr = command({
 
 		const fetchedPr = await task(
 			`Fetching PR ${isNumber ? '#' : ''}${prReference}`,
-			() => getPrInfo(prReference),
+			() => getPrInfo(prReference).catch(throwWithSubprocessOutput),
 		);
 		fetchedPr.clear();
 
@@ -75,7 +81,7 @@ export const pr = command({
 			throw new Error('Fork pull requests are not supported because their head branches are not on the selected remote.');
 		}
 
-		const { stdout: currentBranch } = await execa('git', ['branch', '--show-current']);
+		const { stdout: currentBranch } = await spawn('git', ['branch', '--show-current']);
 		const {
 			baseRefName, headRefName, headRefOid, title, url, number,
 		} = fetchedPr.result;
@@ -83,12 +89,12 @@ export const pr = command({
 
 		const fetchRemote = await task(
 			`Fetching branches from remote ${stringify(remote)}`,
-			() => execa('git', [
+			() => spawn('git', [
 				'fetch',
 				remote,
 				`refs/heads/${baseRefName}:refs/remotes/${remote}/${baseRefName}`,
 				`refs/heads/${headRefName}:refs/remotes/${remote}/${headRefName}`,
-			]),
+			]).catch(throwWithSubprocessOutput),
 		);
 		fetchRemote.clear();
 
@@ -97,32 +103,32 @@ export const pr = command({
 		let squashedHead: string;
 		try {
 			const remoteBranch = `${remote}/${headRefName}`;
-			await execa('git', ['checkout', remoteBranch, '-b', temporaryBranch]);
+			await spawn('git', ['checkout', remoteBranch, '-b', temporaryBranch]);
 			checkedOutTemporaryBranch = true;
 
 			const squashBranch = await task(
 				'Squashing PR',
-				() => squash(`${remote}/${baseRefName}`, message),
+				() => squash(`${remote}/${baseRefName}`, message).catch(throwWithSubprocessOutput),
 			);
 			squashBranch.clear();
 			squashedHead = await getCurrentCommitHash();
 
 			const pushToRemote = await task(
 				`Pushing to remote ${stringify(remote)}`,
-				() => execa('git', [
+				() => spawn('git', [
 					'push',
 					'--no-verify',
 					`--force-with-lease=refs/heads/${headRefName}:${headRefOid}`,
 					remote,
 					`refs/heads/${temporaryBranch}:refs/heads/${headRefName}`,
-				]),
+				]).catch(throwWithSubprocessOutput),
 			);
 			pushToRemote.clear();
 		} finally {
 			if (checkedOutTemporaryBranch) {
 				const revertBranch = await task(`Switching branch back to ${stringify(currentBranch)}`, async () => {
-					await execa('git', ['checkout', '-f', currentBranch]);
-					await execa('git', ['branch', '-D', temporaryBranch]);
+					await spawn('git', ['checkout', '-f', currentBranch]);
+					await spawn('git', ['branch', '-D', temporaryBranch]);
 				});
 				revertBranch.clear();
 			}
@@ -137,7 +143,10 @@ export const pr = command({
 			+ `\n${gray(`git checkout ${headRefName} && git reset --hard ${remote}/${headRefName}`)}`,
 		);
 	})().catch((error) => {
-		console.error(`${red('✖')} ${error.message}`);
+		const message = error instanceof SubprocessError && error.stderr
+			? `${error.message}\n${error.stderr}`
+			: error.message;
+		console.error(`${red('✖')} ${message}`);
 		process.exitCode = 1;
 	});
 });

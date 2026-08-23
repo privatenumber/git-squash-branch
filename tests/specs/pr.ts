@@ -4,6 +4,7 @@ import {
 	createBareRepository,
 	createGh,
 	createRepository,
+	getSubprocessError,
 	runCli,
 } from '../utils/git.js';
 
@@ -45,20 +46,15 @@ export default testSuite(({ describe }) => {
 			await runner.git('update-ref', ['-d', 'refs/remotes/origin/branch-a']);
 			const gh = await createGh(createPullRequest(head, true));
 
-			const result = await runCli(['pr', '1'], runner.fixture.path, {
+			const error = await getSubprocessError(runCli(['pr', '1'], runner.fixture.path, {
 				env: gh.env,
-				reject: false,
-			});
+			}));
 
-			expect(result.failed).toBe(true);
-			expect(result.stderr).toMatch('Fork pull requests are not supported');
+			expect(error.stderr).toMatch('Fork pull requests are not supported');
 			const { stdout: currentBranch } = await runner.git('branch', ['--show-current']);
-			const remoteHead = await runner.git('show-ref', ['--verify', '--quiet', 'refs/remotes/origin/branch-a'], {
-				reject: false,
-			});
+			await getSubprocessError(runner.git('show-ref', ['--verify', '--quiet', 'refs/remotes/origin/branch-a']));
 			const { stdout: remoteBranch } = await runner.git('ls-remote', ['origin', 'refs/heads/branch-a']);
 			expect(currentBranch).toBe('master');
-			expect(remoteHead.failed).toBe(true);
 			expect(remoteBranch).toMatch(head);
 			await author.fixture.rm();
 			await remote.fixture.rm();
@@ -78,13 +74,11 @@ export default testSuite(({ describe }) => {
 			const { stdout: racingHead } = await racing.git('rev-parse', ['HEAD']);
 			const gh = await createGh(createPullRequest(initialHead));
 
-			const result = await runCli(['pr', '1'], runner.fixture.path, {
+			const error = await getSubprocessError(runCli(['pr', '1'], runner.fixture.path, {
 				env: gh.env,
-				reject: false,
-			});
+			}));
 
-			expect(result.failed).toBe(true);
-			expect(result.stdout).toMatch('stale info');
+			expect(error.stdout).toMatch('stale info');
 			const { stdout: currentBranch } = await runner.git('branch', ['--show-current']);
 			const { stdout: temporaryBranches } = await runner.git('branch', ['--list', 'master_*']);
 			const { stdout: remoteBranch } = await runner.git('ls-remote', ['origin', 'refs/heads/branch-a']);

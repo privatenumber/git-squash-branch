@@ -4,6 +4,7 @@ import {
 	cloneRepository,
 	createBareRepository,
 	createRepository,
+	getSubprocessError,
 	runCli,
 } from '../utils/git.js';
 
@@ -65,12 +66,9 @@ export default testSuite(({ describe }) => {
 			const { stdout: head } = await git('rev-parse', ['HEAD']);
 			await fixture.writeFile('untracked', '');
 
-			const result = await runCli(['-b', 'master', '-m', 'squash!'], fixture.path, {
-				reject: false,
-			});
+			const error = await getSubprocessError(runCli(['-b', 'master', '-m', 'squash!'], fixture.path));
 
-			expect(result.failed).toBe(true);
-			expect(result.stderr).toMatch('Working tree is not clean');
+			expect(error.stderr).toMatch('Working tree is not clean');
 			const { stdout: currentHead } = await git('rev-parse', ['HEAD']);
 			expect(currentHead).toBe(head);
 			await fixture.rm();
@@ -118,11 +116,8 @@ export default testSuite(({ describe }) => {
 			await git('config', ['user.name', '']);
 			await git('config', ['user.email', '']);
 
-			const result = await runCli(['-b', 'master', '-m', 'squash!'], fixture.path, {
-				reject: false,
-			});
+			await getSubprocessError(runCli(['-b', 'master', '-m', 'squash!'], fixture.path));
 
-			expect(result.failed).toBe(true);
 			const { stdout: currentHead } = await git('rev-parse', ['HEAD']);
 			const { stdout: status } = await git('status', ['--porcelain']);
 			expect(currentHead).toBe(head);
