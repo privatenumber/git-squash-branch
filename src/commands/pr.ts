@@ -8,14 +8,6 @@ import {
 	createCommit,
 } from '../utils.js';
 
-const assertHasGh = async () => {
-	const { stdout } = await spawn('gh', ['--version']).catch(() => ({ stdout: '' }));
-
-	if (!stdout.includes('https://github.com/cli/cli/releases/tag/')) {
-		throw new Error('You must have GitHub CLI installed to use this command: https://cli.github.com');
-	}
-};
-
 const properties = ['title', 'number', 'baseRefName', 'headRefName', 'headRefOid', 'url', 'isCrossRepository'] as const;
 type PrData = {
 	title: string;
@@ -60,8 +52,6 @@ export default async (parentRemote: string) => {
 
 		strictFlags: true,
 	});
-
-	await assertHasGh();
 
 	const remote = argv.flags.remote ?? parentRemote;
 

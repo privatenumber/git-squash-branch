@@ -73,9 +73,7 @@ export const createGh = async (pullRequest: PullRequest) => {
 		gh: `#!/usr/bin/env node
 const [command, subcommand] = process.argv.slice(2);
 
-if (command === '--version') {
-	console.log('gh version 2.0.0 (https://github.com/cli/cli/releases/tag/v2.0.0)');
-} else if (command === 'pr' && subcommand === 'view') {
+if (command === 'pr' && subcommand === 'view') {
 	console.log(${JSON.stringify(JSON.stringify(pullRequest))});
 } else {
 	process.exitCode = 1;
