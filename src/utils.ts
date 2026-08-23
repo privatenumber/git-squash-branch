@@ -40,22 +40,8 @@ export const createCommit = async (
 };
 
 export const getRemoteDefaultBranch = async (remote: string) => {
-	const { stdout } = await spawn(
-		'git',
-		['remote', 'show', remote],
-		{
-			// In case non-English locale
-			env: { LC_ALL: 'C' },
-		},
-	).catch((error) => {
-		if (error instanceof SubprocessError) {
-			return error;
-		}
-
-		throw error;
-	});
-
-	return stdout.match(/ {2}HEAD branch: (.*)/)?.[1];
+	const { stdout } = await spawn('git', ['ls-remote', '--symref', remote, 'HEAD']);
+	return stdout.match(/^ref: refs\/heads\/(.+)\tHEAD$/m)?.[1];
 };
 
 export const assertCleanTree = async () => {

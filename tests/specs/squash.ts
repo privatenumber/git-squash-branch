@@ -1,5 +1,7 @@
 import path from 'node:path';
 import { expect, testSuite } from 'manten';
+import { SubprocessError } from 'nano-spawn';
+import { getRemoteDefaultBranch } from '../../src/utils.js';
 import {
 	cloneRepository,
 	createBareRepository,
@@ -10,6 +12,18 @@ import {
 
 export default testSuite(({ describe }) => {
 	describe('squash', ({ test }) => {
+		test('surfaces remote default branch lookup failures', async () => {
+			let error: unknown;
+
+			try {
+				await getRemoteDefaultBranch('missing');
+			} catch (caughtError) {
+				error = caughtError;
+			}
+
+			expect(error).toBeInstanceOf(SubprocessError);
+		});
+
 		test('rejects an unknown flag', async () => {
 			const { fixture, git } = await createRepository();
 			const remote = await createBareRepository();
