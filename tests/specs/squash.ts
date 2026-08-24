@@ -1,14 +1,14 @@
 import path from 'node:path';
 import { describe, expect, test } from 'manten';
 import { SubprocessError } from 'nano-spawn';
-import { getRemoteDefaultBranch } from '../../src/utils.js';
+import { getRemoteDefaultBranch } from '../../src/utils.ts';
 import {
 	cloneRepository,
 	createBareRepository,
 	createRepository,
 	getSubprocessError,
 	runCli,
-} from '../utils/git.js';
+} from '../utils/git.ts';
 
 describe('squash', () => {
 	test('surfaces remote default branch lookup failures', async () => {

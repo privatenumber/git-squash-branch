@@ -1,10 +1,15 @@
 {
 	"compilerOptions": {
+		"erasableSyntaxOnly": true,
+		"target": "esnext",
 		"module": "Node16",
 		"moduleResolution": "Node16",
 		"resolveJsonModule": true,
+		"allowImportingTsExtensions": true,
 		"strict": true,
+		"noEmit": true,
 		"esModuleInterop": true,
 		"isolatedModules": true,
+		"verbatimModuleSyntax": true,
 	},
 }

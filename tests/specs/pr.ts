@@ -7,7 +7,7 @@ import {
 	createRepository,
 	getSubprocessError,
 	runCli,
-} from '../utils/git.js';
+} from '../utils/git.ts';
 
 const createPullRequest = (headRefOid: string, isCrossRepository = false) => ({
 	title: 'Pull request',
